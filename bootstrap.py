@@ -82,7 +82,7 @@ def main(verbose=True):
     fig = plt.figure()
 
     ax1 = fig.add_subplot(1,2,1)    
-    conts, edges, _ = ax1.hist(fhatsim)
+    conts, edges, _ = ax1.hist(fhatsim, bins=20)
     ymax = 1.15*conts.max()
     ax1.plot([fhattrue,fhattrue], [0,ymax], 'r-', lw=2)
     ax1.set_ylim([0,ymax])
