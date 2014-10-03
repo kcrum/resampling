@@ -7,35 +7,95 @@ import matplotlib.pyplot as plt
 # f, we find an estimate 'fhat' for f given by:
 #    fhat = (Var[X] - Cov[X,Y])/(Var[X] + Var[Y] - 2Cov[X,Y]). 
 #
-# Assume we have a sample of n=100 (x,y) pairs for some Var[X], Var[Y], and 
-# Cov[X,Y]. Use the bootstrap technique to generate m=1000 bootstrap sets, and 
-# estimate the distribution of fhat. Compare this to the distribution you get
+# Assume we have a sample of nevts=100 (x,y) pairs for some Var[X], Var[Y], and 
+# Cov[X,Y]. Use the bootstrap technique to generate nsets=1000 bootstrap sets, 
+# and estimate the distribution of fhat. Compare this to the distribution you get
 # by throwing 1000 sets from truth.
 
 meanxtrue, meanytrue = 0, 0
 varxtrue = 1
 varytrue = 1.25
 covxytrue = 0.5
-truef = fhat(varx, vary, covxy)
+truemeans = [meanxtrue, meanytrue]
+truecovmat = [[varxtrue, covxytrue],[covxytrue, varytrue]]
+nevts, nsets = 100, 1000
 
-n, m = 100, 1000
-
-def fhat(varx, vary, covxy):
+# Calculate fhat
+def fhat(covmat):
+    varx, vary, covxy = covmat[0][0], covmat[1][1], covmat[0][1]
     return (vary - covxy)/(varx + vary - 2*covxy)
 
-def make_data(meanx, meany, varx, vary, covxy, setsize):
-    covmat = [[varx,covxy],
-              [covxy,vary]]
-    return np.random.multivariate_normal([meanx, meany], covmat, setsize)
+# Return a data set pulled from a 2-d normal with 'size' entries.
+def make_data(means, covmat, size):
+    return np.random.multivariate_normal(means, covmat, size)
 
+# Plot an (n x 2) array
 def plot_set(dataset):
-    plt.scatter(norm2d[:,0], norm2d[:,1])
+    plt.scatter(dataset[:,0], dataset[:,1])
     plt.show()
 
 # Make bootstrap set with 'size' events.
-def bootstrap_set(dataset, size=len(dataset)):
+def bootstrap_set(dataset, size):
     indices = np.random.choice(range(len(dataset)), size)
     bootset = []
     for i in indices:
         bootset.append(dataset[i])
     return bootset
+
+# Make distributions of fhat for bootstrap approach and by pulling from 
+# distribution. 
+def fhat_distributions(bootdata):
+    fhatboot = []
+    fhatsim = []
+
+    for i in xrange(nsets):
+        # Get new set pulled from truth
+        idata = make_data(truemeans, truecovmat, nevts)
+        icovmat = np.cov(idata,rowvar=0)
+        fhatsim.append(fhat(icovmat))
+
+        # Get bootstrap set pulled from bootdata
+        iBSdata = bootstrap_set(bootdata, len(bootdata))
+        iBScovmat = np.cov(iBSdata,rowvar=0)
+        fhatboot.append(fhat(iBScovmat))
+    
+    return fhatsim, fhatboot
+
+
+def main(verbose=True):
+    fhattrue = fhat(truecovmat)
+    if verbose:
+        print 'True fhat: ', fhattrue
+
+    # Pull the data set from which you will draw your bootstrap sets.
+    bootdata = make_data(truemeans, truecovmat, nevts)
+    bootcovmat = np.cov(bootdata,rowvar=0)
+
+    if verbose:
+        print 'From the bootstrap set: '
+        print 'fhat: ', fhat(bootcovmat)
+        print 'Cov. mat.: ', bootcovmat
+        print '-'*70
+
+    fhatsim, fhatboot = fhat_distributions(bootdata)
+    # Plot
+    fig = plt.figure()
+
+    ax1 = fig.add_subplot(1,2,1)    
+    conts, edges, _ = ax1.hist(fhatsim)
+    ymax = 1.15*conts.max()
+    ax1.plot([fhattrue,fhattrue], [0,ymax], 'r-', lw=2)
+    ax1.set_ylim([0,ymax])
+    ax1.set_title(r"$\hat{f}$ from 1,000 simulations")
+
+    ax2 = fig.add_subplot(1,2,2)    
+    ax2.hist(fhatboot, bins=edges)
+    ax2.plot([fhattrue,fhattrue], [0,ymax], 'r-', lw=2)
+    ax2.set_ylim([0,ymax])
+    ax2.set_title(r"$\hat{f}$ from 1,000 bootstrap samples")
+
+    plt.show()
+
+if __name__ == '__main__':
+    main()
+    
