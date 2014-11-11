@@ -59,25 +59,31 @@ def fhat_distributions(bootdata):
         iBScovmat = np.cov(iBSdata,rowvar=0)
         fhatboot.append(fhat(iBScovmat))
     
-    return fhatsim, fhatboot
+    return np.array(fhatsim), np.array(fhatboot)
 
 
 def main(verbose=True):
     fhattrue = fhat(truecovmat)
-    if verbose:
-        print 'True fhat: ', fhattrue
 
     # Pull the data set from which you will draw your bootstrap sets.
     bootdata = make_data(truemeans, truecovmat, nevts)
     bootcovmat = np.cov(bootdata,rowvar=0)
 
+    fhatsim, fhatboot = fhat_distributions(bootdata)    
+
+    # Output some statistics
     if verbose:
-        print 'From the bootstrap set: '
-        print 'fhat: ', fhat(bootcovmat)
-        print 'Cov. mat.: ', bootcovmat
+        print '-'*70
+        print 'True fhat: ', fhattrue
+        print 'From the bootstrap parent set: '
+        print '   fhat: ', fhat(bootcovmat)
+        print '   Cov. mat.: ', bootcovmat
+        print 'Simulated fhat mean:', fhatsim.mean(), ' Std. dev.: ', \
+            fhatsim.std(ddof=1)
+        print 'Bootstrap fhat mean:', fhatboot.mean(), ' Std. dev.: ', \
+            fhatboot.std(ddof=1)
         print '-'*70
 
-    fhatsim, fhatboot = fhat_distributions(bootdata)
     # Plot
     fig = plt.figure()
 

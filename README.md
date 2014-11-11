@@ -9,4 +9,8 @@ f, we find an estimate 'fhat' for f given by:
 Assume we have a sample of nevts=100 (x,y) pairs for some Var[X], Var[Y], and
 Cov[X,Y]. Use the bootstrap technique to generate nsets=1000 bootstrap sets,
 and estimate the distribution of fhat. Compare this to the distribution you get
-by throwing 1000 sets from truth.  
+by throwing 1000 sets from truth. The user can call
+```
+python bootstrap.py
+```
+to see the results of this estimate.
